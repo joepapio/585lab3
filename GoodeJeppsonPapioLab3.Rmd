@@ -1,0 +1,42 @@
+---
+title: "585Lab3"
+author: "Goode, Jeppson, Papio"
+date: "February 16, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(tidyverse)
+library(purrr)
+
+SUSSI <- list()
+selfEff <- list()
+
+for (i in 1:4){
+  SUSSI[[i]] <- read_excel("./Spreadsheets/SUSSI compilation_FINAL_DataInconsistencies.xlsx", sheet = i)
+selfEff[[i]] <- read_excel("./Spreadsheets/Self efficacy compilation_FINAL_DataInconsistencies.xlsx", sheet= i)
+}
+
+#SUSSI %>% map(names)
+#selfEff %>% map(dim)
+##no consistency in columns across various sheets within a file
+
+
+```
+
+## R Markdown
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
