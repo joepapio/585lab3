@@ -30,7 +30,7 @@ Before we can combine the files, or even the semesters, we need to do a little b
 file1[[1]]
 # file 1 sem 1 is missing column titles
 names(file1[[1]])[c(1,2)]<-c("ID", "Test")
-file1[[1]] <- file1[[1]] %>% mutate ( ID= ID %% 10000, Sem =1)
+file1[[1]] <- file1[[1]] %>% mutate ( Sem =1)
 
 
 file1[[2]]
@@ -38,18 +38,18 @@ file1[[2]]
 names(file1[[2]])[c(1,2)]<-c("ID", "Test")
 # delete extra column of NA's
 file1[[2]] <- file1[[2]][,-15]
-file1[[2]] <- file1[[2]] %>% mutate ( ID= ID %% 20000, Sem = 2)
+file1[[2]] <- file1[[2]] %>% mutate ( Sem = 2)
 
 file1[[3]]
 # file 1 sem 3 is also missing column titles
 names(file1[[3]])[c(1,2)]<-c("ID", "Test")
-file1[[3]] <- file1[[3]] %>% mutate ( ID= ID %% 30000, Sem =3)
+file1[[3]] <- file1[[3]] %>% mutate ( Sem =3)
 
 file1[[4]]
 # file 1 sem 4 is also missing column titles
 names(file1[[4]])[c(1,2)]<-c("ID", "Test")
 # the ids for sem 4 have an extra 100 in them?
-file1[[4]] <- file1[[4]] %>% mutate ( ID= (ID -100) %% 40000, Sem =4)
+file1[[4]] <- file1[[4]] %>% mutate ( ID=ID -100, Sem =4)
 
 # combine the list of data frames into one dataframe
 f1 <- do.call("rbind", file1)
@@ -58,6 +58,7 @@ f1 <- do.call("rbind", file1)
 f1$Test <- gsub("PRE", "Pre", f1$Test)
 f1$Test <- gsub("POST", "post", f1$Test)
 f1
+names(f1)[15] <- "Gender"
 
 
 
@@ -75,18 +76,18 @@ file2[[1]] <- file2[[1]] %>% mutate (Sem =1)
 file2[[2]]
 # file 2 sem 2 is also missing column titles
 names(file2[[2]])[c(1,2)]<-c("ID", "Test")
-file2[[2]] <- file2[[2]] %>% mutate ( ID= ID %% 20000, Sem =2)
+file2[[2]] <- file2[[2]] %>% mutate ( Sem =2)
 
 file2[[3]]
 # file 2 sem 3 is also missing column titles
 names(file2[[3]])[c(1,2)]<-c("ID", "Test")
-file2[[3]] <- file2[[3]] %>% mutate ( ID= ID %% 30000, Sem =3)
+file2[[3]] <- file2[[3]] %>% mutate ( Sem =3)
 
 file2[[4]]
 # file 1 sem 4 is also missing column titles
 names(file2[[4]])[c(1,2)]<-c("ID", "Test")
 # the ids for sem 4 have an extra 1100 in them?
-file2[[4]] <- file2[[4]] %>% mutate ( ID= (ID -1100) %% 40000, Sem =4)
+file2[[4]] <- file2[[4]] %>% mutate ( ID= ID -1100, Sem =4)
 
 # looking back throu the dimensions of all 4 semesters, semester one is missing the column "MTH 3", so we'll add in a column of NAS
 file2[[1]] <- file2[[1]] %>% mutate ("MTH 3" = NA)
@@ -99,8 +100,49 @@ f2 <- do.call("rbind", file2)
 # make sure all "test" resposes are the same case
 f2$Test <- gsub("PRE", "Pre", f2$Test)
 f2$Test <- gsub("POST", "post", f2$Test)
-f2
-
+f2 %>% arrange(ID)
+names(f2)[37]<- "Gender"
 
 
 ```
+
+Now that we have the two files in two dataframes we can start working on getting them combined into one dataframe.
+
+We have a split key so we will need to create two dataframes for each file before continuing.
+
+First, we should extract the id, gender, and characteristic -- the combination of which should identify a student.
+
+```{r}
+
+keys1 <- f1 %>% select(ID, Gender, Characteristic)
+keys2 <- f2 %>% select(ID, Gender, Characteristic)
+#combine the two together
+keys <- rbind(keys1, keys2)
+
+
+
+#since there are duplicates, we want to pull out the unique, complete, values
+keys <- unique(keys)
+keys <- keys[complete.cases(keys),]
+
+```
+
+
+Now we can join the f1 and f2 with our dataframe of keys
+
+```{r}
+#take gender and characeristic out of files 1 and 2
+F1 <- f1[,-c(15,16)]
+F2 <- f2[,-c(37,38)]
+
+# Join the dataframes
+first <- left_join(keys, F1, by=("ID"))
+
+final <- left_join(first, F2, by=c("ID","Test"))
+final
+
+```
+
+
+
+
