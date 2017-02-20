@@ -58,8 +58,10 @@ f1 <- do.call("rbind", file1)
 f1$Test <- gsub("PRE", "Pre", f1$Test)
 f1$Test <- gsub("POST", "Post", f1$Test)
 f1
-names(f1)[15] <- "Gender"
 
+#fix names of the columns
+names(f1)[c(14, 15,18)] <- c("Normalized Change", "Gender", "Treatment Part 2")
+f1
 
 
 ```
@@ -110,12 +112,12 @@ Now that we have the two files in two dataframes we can start working on getting
 
 We have a split key so we will need to create two dataframes for each file before continuing.
 
-First, we should extract the id, gender, and characteristic -- the combination of which should identify a student.
+First, we should extract the all the information about the student that is constant throughout the semester.
 
 ```{r}
 
-keys1 <- f1 %>% select(ID, Gender, Characteristic)
-keys2 <- f2 %>% select(ID, Gender, Characteristic)
+keys1 <- f1 %>% select(ID, Gender, Characteristic, `Treatment Part 1`, `Treatment Part 2`, Sem)
+keys2 <- f2 %>% select(ID, Gender, Characteristic, `Treatment Part 1`, `Treatment Part 2`, Sem)
 #combine the two together
 keys <- rbind(keys1, keys2)
 
@@ -124,7 +126,7 @@ keys <- rbind(keys1, keys2)
 #since there are duplicates, we want to pull out the unique, complete, values
 keys <- unique(keys)
 keys <- keys[complete.cases(keys),]
-
+keys %>% arrange(ID)
 ```
 
 
@@ -132,17 +134,29 @@ Now we can join the f1 and f2 with our dataframe of keys
 
 ```{r}
 #take gender and characeristic out of files 1 and 2
-F1 <- f1[,-c(15,16)]
-F2 <- f2[,-c(37,38)]
+F1 <- f1[,-c(15:19)]
+F2 <- f2[,-c(37:41)]
 
 # Join the dataframes
 first <- left_join(keys, F1, by=("ID"))
-
+first %>% arrange(ID)
 final <- left_join(first, F2, by=c("ID","Test"))
-final
+final %>% arrange(ID)
 
 ```
 
+come up with a visual summary comparing pre and post-test scores from the two tests facetted by semester. Try to work gender into this display in a meaningful way.
+```{r}
+subset.final <- final %>% select(ID, Gender, Sem, Test, Total.x, Total.y) %>% arrange(ID)
+names(subset.final)[c(5,6)] <- c("Total.Test1", "Total.Test2")
+subset.final %>% arrange(ID)
+
+subset.final <- unique(subset.final)
+final.final <- subset.final %>% unite(score, Total.Test1, Total.Test2)%>% spread(key=Test, value=score)%>% separate(Post, c("Post1", "Post2"))%>% separate(Pre, c("Pre1", "Pre2"))
+
+final.final %>% gather(Post, value=Score, 4:5)%>% gather(Test, value=Score2, 4:5) %>% ggplot() + geom_point(aes(x=as.integer(Score), y=as.integer(Score2), shape=Test, colour=Gender))+facet_grid(Sem~Test)
+
+```
 
 
 
