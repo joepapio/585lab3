@@ -56,7 +56,7 @@ f1 <- do.call("rbind", file1)
 
 # make sure all "test" resposes are the same case
 f1$Test <- gsub("PRE", "Pre", f1$Test)
-f1$Test <- gsub("POST", "post", f1$Test)
+f1$Test <- gsub("POST", "Post", f1$Test)
 f1
 names(f1)[15] <- "Gender"
 
@@ -99,7 +99,7 @@ f2 <- do.call("rbind", file2)
 
 # make sure all "test" resposes are the same case
 f2$Test <- gsub("PRE", "Pre", f2$Test)
-f2$Test <- gsub("POST", "post", f2$Test)
+f2$Test <- gsub("POST", "Post", f2$Test)
 f2 %>% arrange(ID)
 names(f2)[37]<- "Gender"
 
