@@ -212,7 +212,7 @@ ggplot(graph.data.1, aes(x = Pre, y = Post, color = Gender)) +
   geom_point() + 
   geom_abline(intercept = 0, slope = 1) +
   facet_wrap( ~ Semester) +
-  labs(title= "Scatterplot of Pre and Post Test 1 scores")
+  labs(title= "Scatterplot of Pre and Post Test 1 scores (black line is the 1:1 line)")
 
 ggplot(graph.data.1, aes(x = Gender, y = Difference)) + 
   geom_boxplot() +
@@ -234,7 +234,7 @@ ggplot(graph.data.2, aes(x = Pre, y = Post, color = Gender)) +
   geom_point() + 
   geom_abline(intercept = 0, slope = 1) +
   facet_wrap( ~ Semester) +
-  labs(title= "Scatterplot of Pre and Post Test 2 scores")
+  labs(title= "Scatterplot of Pre and Post Test 2 scores (black line is the 1:1 line)")
 
 ggplot(graph.data.2, aes(x = Gender, y = Difference)) + 
   geom_boxplot() +
