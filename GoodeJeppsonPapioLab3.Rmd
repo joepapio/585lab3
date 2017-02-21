@@ -146,63 +146,22 @@ final %>% arrange(ID)
 
 ```
 
-come up with a visual summary comparing pre and post-test scores from the two tests facetted by semester. Try to work gender into this display in a meaningful way.
-```{r}
-subset.final <- final %>% select(ID, Gender, Sem, Test, Total.x, Total.y) %>% arrange(ID)
-names(subset.final)[c(5,6)] <- c("Total.Test1", "Total.Test2")
-subset.final %>% arrange(ID)
 
-subset.final <- unique(subset.final)
-final.final <- subset.final %>% unite(score, Total.Test1, Total.Test2)%>% spread(key=Test, value=score)%>% separate(Post, c("Post1", "Post2"))%>% separate(Pre, c("Pre1", "Pre2"))
+After joining the two dataframes, we renamed the variables corresponding to each test total score.
 
-final.final %>% gather(Post, value=Score, 4:5)%>% gather(Test, value=Score2, 4:5) %>% ggplot() + geom_point(aes(x=as.integer(Score), y=as.integer(Score2), shape=Test, colour=Gender))+facet_grid(Sem~Test)
-
-```
-There are two variables for semester (one from each test dataframe). We want to check to see if the two variables agree. This is done by looking at the summary of the differences of the two variabes. As seen in the code below, the variables do agree besides for in several cases where NAs appear in the differences. These are due to cases when students do not have responses for one of the tests.
 
 ```{r}
-# Summary of differences
-final %>%
-  mutate(Sem.Diff = Sem.x - Sem.y) %>%
-  select(Sem.Diff) %>%
-  summary()
-
-# Summary of semester variable from test 1 dataframe
-final %>%
-  select(Sem.x) %>%
-  summary()
-
-# Summary of semester variable from test 2 dataframe
-final %>%
-  select(Sem.y) %>%
-  summary()
-```
-
-It is decided to only use the variable from the test 1 data frame since it has less NA's. However, this is something that it would be a good idea to look more into. The variable for semester from the test 2 dataframe is removed, and the variable for semester from the test 1 dataframe is renamed. The variables for test 1 and test 2 total score are also renamed.
-
-```{r}
-# Remove the second 
-final <- final %>%
-  select(-Sem.y)
 
 # Renaming variables
-names(final)[19] <- "Semester"
-names(final)[15] <- "Test1_Total"
+names(final)[6] <- "Semester"
+names(final)[18] <- "Test1_Total"
 names(final)[52] <- "Test2_Total"
 ```
 
 ## Graphs Comparing Pre and Post Scores
 
-Several ways of visually comparing the pre and post scores are included below. The first considered is a scatterplot of pre and post scores. To do this, the final dataset first needs to be adjusted to get pre and post scores in two separated columns. The code below was run to do this and error appeared indicating "Duplicate identifiers for rows".
 
-```{r}
-# final %>%
-#  select(ID, Gender, Test, Test1_Total, Semester) %>%
-#  spread(key = Test, value = Test1_Total) %>%
-#  head()
-```
-
-By consdering the number of IDs and unique IDs in the key dataframe created earlier, it is found that the lengths differ. It was discovered that there are discrepancies between the test 1 and test 2 variables for characteristic and gender. There are several examples below of students that show these discrepancies.
+Examining the number of IDs and unique IDs in the key dataframe created earlier, the lengths differ, due to discrepancies between the test 1 and test 2 variables for characteristic and gender. There are several examples below of students that show these discrepancies.
 
 ```{r}
 # Comparing lengths of key IDs and unique IDs
@@ -220,7 +179,7 @@ final %>%
   select(ID, Gender)
 ```
 
-The discrepancies from test 2 dataframe occur at the end of the final dataframe. The assumption that the values from the test 1 dataframe are correct is made. However, this is something that the data collector should be consulted about. Thus, the first 346 rows before the IDs start repeating are kept.
+The discrepancies from test 2 dataframe occur at the end of the final dataframe. Although it would be advised to consult with the data collaborator, the duplicates after the first 346 rows are removed on the assumption that the values from the test 1 dataframe are correct .
 
 ```{r}
 # Removing rows with dis
@@ -228,7 +187,9 @@ final <- final %>%
   slice(1:346)
 ```
 
-With these rows removed, the dataframe can be transformed into the necessary formats. The test 1 and test 2 scores are separated into two dataframes with pre and post scores in two columns. Only the variables of ID, Gender, Test, and Semester are kept. Additionally, a variable of the difference between the post and pre scores is created (Post-Pre).
+With these rows removed, the dataframe can be transformed into the necessary formats using functions from the *tidyr* package. The test 1 and test 2 scores are separated into two dataframes with pre and post scores in two columns. Only the variables of ID, Gender, Test, and Semester are kept. Additionally, we created a variable of the difference between the post and pre scores (Post-Pre).
+
+To get a better feel for differences between Pre and Posttest scores, as well as differences by gender, several ways of visually comparing the pre and post scores are included below. For each test, we produce a scatterplot comparing Pre and Post scores, then side by side box plots of Pre and Post differences by gender, and lastly overlapping densities of the differences between Pre and Post by gender.
 
 ```{r}
 # Data for test 1 scores
@@ -250,17 +211,20 @@ graph.data.2 <- final %>%
 ggplot(graph.data.1, aes(x = Pre, y = Post, color = Gender)) + 
   geom_point() + 
   geom_abline(intercept = 0, slope = 1) +
-  facet_wrap( ~ Semester)
+  facet_wrap( ~ Semester) +
+  labs(title= "Scatterplot of Pre and Post Test 1 scores")
 
 ggplot(graph.data.1, aes(x = Gender, y = Difference)) + 
   geom_boxplot() +
   facet_wrap( ~ Semester) +
-  coord_flip()
+  coord_flip() +
+  labs(title= "Side by side boxplots of differences between Pre and Post Test 1 scores")
 
 ggplot(graph.data.1, aes(x = Difference)) + 
   geom_density(data = subset(graph.data.1, Gender == 'Female'),fill = "red", alpha = 0.5) +
   geom_density(data = subset(graph.data.1, Gender == 'Male'),fill = "blue", alpha = 0.5) +
-  facet_wrap( ~ Semester)
+  facet_wrap( ~ Semester) +
+  labs(title= "Overlapping densities of differences between Pre and Post Test 1 scores")
 ```
 
 ### Test 2 Scores
@@ -269,17 +233,20 @@ ggplot(graph.data.1, aes(x = Difference)) +
 ggplot(graph.data.2, aes(x = Pre, y = Post, color = Gender)) + 
   geom_point() + 
   geom_abline(intercept = 0, slope = 1) +
-  facet_wrap( ~ Semester)
+  facet_wrap( ~ Semester) +
+  labs(title= "Scatterplot of Pre and Post Test 2 scores")
 
 ggplot(graph.data.2, aes(x = Gender, y = Difference)) + 
   geom_boxplot() +
   facet_wrap( ~ Semester) +
-  coord_flip()
+  coord_flip()+
+  labs(title= "Side by side boxplots of differences between Pre and Post Test 2 scores")
 
 ggplot(graph.data.2, aes(x = Difference)) + 
   geom_density(data = subset(graph.data.2, Gender == 'Female'),fill = "red", alpha = 0.5) +
   geom_density(data = subset(graph.data.2, Gender == 'Male'),fill = "blue", alpha = 0.5) +
-  facet_wrap( ~ Semester)
+  facet_wrap( ~ Semester) +
+  labs(title= "Overlapping densities of differences between Pre and Post Test 2 scores")
 ```
 
 
